@@ -1,151 +1,93 @@
-# Frontend Performance Lab — 100K Rows
+# Frontend Performance Lab
 
-> "This is a frontend performance experiment comparing different strategies for
-> rendering and processing 100,000 rows."
+> A collection of controlled frontend experiments exploring React rendering,
+> browser main-thread behavior, networking, runtime observability, large-scale
+> rendering, and frame performance.
 
-## 1. What this demonstrates
+Most frontend performance problems aren't solved by randomly adding memoization.
+They're solved by understanding what the browser is doing. Each lab isolates one
+problem with a deliberately inefficient baseline, an optimized implementation,
+real measurements (never fabricated), and exact DevTools recording steps.
 
-A single-page React app renders **exactly 100,000 deterministic rows** four ways —
-**Baseline → Virtualized → Optimized → Worker** — so Chrome DevTools Performance
-traces show the before/after of each optimization. The story:
+## Labs
 
-```
-100K rows → slow baseline → profile → virtualize → memoize → worker → measure again
-```
+| Lab | Problem | Main Tool | Main Optimization |
+| --- | --- | --- | --- |
+| Rendering | Unnecessary React renders | React Profiler | State isolation / memoization |
+| Main Thread | CPU blocking | Chrome Performance | Web Worker |
+| Observability | Unknown runtime behavior | PerformanceObserver | Instrumentation |
+| Network | Request waterfall | Network panel | Parallelization / caching |
+| Stress Test | Rendering scale | Performance panel | Virtualization / Canvas |
+| FPS | Janky interactions | Performance / RAF | Rendering pipeline optimization |
 
-## 2. Baseline architecture
+Routes: `/`, `/rendering-lab`, `/main-thread-lab`, `/observability-lab`,
+`/network-lab`, `/stress-test`, `/fps-lab`.
 
-- `src/data/generateData.ts` — seeded PRNG (mulberry32, seed 42), same dataset every load.
-- `src/experiments/process.ts → baselineProcess()` — intentionally naive but honest work:
-  filter → map(spread) → filter → map(spread) → query filter with per-row
-  `toLowerCase()` → sort with `localeCompare` → throwaway derived-value pass.
-- `src/components/Table.tsx → FullTable` — renders **all** matched rows as real `<tr>`s
-  (up to 100k rows × 10 cells ≈ 1M DOM nodes). No CSS hiding tricks.
-- `PlainRow` — non-memoized; any state change (e.g. row selection) re-renders every row.
-- No `setTimeout`, no fake delays. The bottleneck is real DOM + real CPU work.
+Earlier standalone experiments are kept reachable: `/100k` (original 100K-row
+table lab) and `/form` (voucher-entry input-latency demo).
 
-## 3. Bottlenecks discovered
-
-Profile the baseline and look for (your machine's numbers will differ):
-
-1. **Initial render** — 1M+ DOM nodes: long scripting + rendering + layout.
-2. **Scroll** — the browser must lay out / paint a gigantic document on every frame.
-3. **Filter/sort** — 5 passes over 100k rows with per-row allocations and lowercasing.
-4. **Row selection** — one click re-renders all 100k rows (no memoization).
-
-## 4. Optimization techniques
-
-| Mode | What changed | File |
-|---|---|---|
-| Virtualized | Renders only the visible window (~16 rows + 20 overscan); spacer div preserves scroll height of all 100k | `Table.tsx → VirtualizedTable` |
-| Optimized | + `React.memo` rows with stable `onSelect` (`useCallback`); single-pass filter over a precomputed lowercase `_search` index; cheap comparators | `TableRow.tsx → MemoRow`, `optimizedProcess()` |
-| Worker | + filter/sort moved to a Web Worker via `postMessage`; UI thread only renders | `workers/dataWorker.ts` |
-
-`useMemo`/`useCallback` are used only where they fix a measured problem (stable row
-props, one-time dataset/index creation) — not sprayed everywhere.
-
-## 5. How to reproduce
+## Run it
 
 ```bash
 npm install
-npm run dev   # open http://localhost:5173
+npm run dev        # http://localhost:5173 (mock API active — required for /network-lab)
 ```
 
-1. Load the page in **Baseline** mode (renders all 100k rows).
-2. Switch modes with the four buttons; dataset and controls stay identical.
-3. Use **Apply search / filter**, **Sort by salary/score**, department/status selects,
-   and row clicks as the profileable actions.
-4. Read real timings in the **Performance Metrics** panel (every value comes from
-   `performance.mark()`/`measure()` — nothing is hardcoded).
+## Production profiling (important)
 
-## 6. Chrome DevTools recording instructions
+Performance recordings intended for comparison should preferably be taken from
+the production build — React dev mode, StrictMode double-invocation, source
+maps, and dev tooling change render counts and timings:
 
-- **Test A — Initial load:** DevTools → Performance → Record → reload page → Stop.
-- **Test B — Scroll:** Record → rapidly scroll the table → Stop. (Baseline: jank;
-  virtualized modes: smooth, ~35 DOM rows.)
-- **Test C — Filtering:** Record → type a query → **Apply search / filter** → Stop.
-- **Test D — Sorting:** Record → **Sort by salary** → Stop.
-- **Selection:** Record → click a row → Stop. Compare baseline (100k rows re-render)
-  vs. optimized (one row) using the React DevTools Profiler ("Highlight updates").
-
-Tip: throttle CPU (Performance → CPU: 4x slowdown) to exaggerate main-thread work.
-
-## 7. Before/after measurements
-
-Fill these in from YOUR traces. Never invent numbers.
-
-```
-Baseline:
-- DOM nodes (<tr> count): TBD
-- Longest task (initial load): TBD
-- Filter+sort (full dataset): TBD ms
-- Sort by salary: TBD ms
-- Row selection commit: TBD ms
-
-Virtualized:
-- DOM rows: TBD (~viewport + overscan)
-- Longest task (initial load): TBD
-- Scroll fps / long tasks: TBD
-
-Optimized:
-- DOM rows: TBD
-- Filter+sort: TBD ms
-- Row selection (re-rendered rows per Profiler): TBD
-
-Worker:
-- Worker filter+sort (off-thread): TBD ms
-- Main-thread blocked during filter: TBD ms
-- INP / responsiveness during filter: TBD
+```bash
+npm run build
+npm run preview
 ```
 
-## 8. What each optimization actually changed
+Notes:
 
-- **Virtualization** removed the DOM bottleneck (~1M nodes → ~35 rows) but kept the
-  naive data pipeline — filtering/sorting still costs the same. Scroll and initial
-  render improve; data processing does not.
-- **Memoization** removed the React re-render bottleneck — selection and unrelated
-  state updates skip untouched rows. Data pipeline still runs on the main thread.
-- **Single-pass filter + search index** removed the repeated-work bottleneck —
-  one loop, no per-row `toLowerCase()`, no throwaway allocations, cheap comparator.
-- **Web Worker** removed the main-thread blocking — the same single-pass work runs
-  off-thread, so input/animation stay responsive. Cost: `postMessage`
-  structured-clone + async result handling.
+- **StrictMode** is enabled and can intentionally double-invoke certain
+  development behavior. Never present dev-only render counts as production
+  results without this context.
+- The `/network-lab` mock API is Vite dev-server middleware. Static preview
+  hosting cannot run it; the lab surfaces an honest error there instead of
+  fake data.
+- Append `?recording=true` to any page for recording mode: navigation chrome
+  hides and metrics enlarge for screen capture.
 
-## Project structure
+## Measurement rules
+
+Every displayed number is measured, computed from an actual measurement, or
+clearly labeled unavailable/estimated. Before/after tables in each lab README
+contain `TBD` until you run the experiment. No "improved by 93%" claims without
+a trace behind them.
+
+## Principles
+
+1. Measure before optimizing — never assume the bottleneck.
+2. Rendering less is often better than rendering faster.
+3. Main-thread time is a limited resource.
+4. React performance is often an architecture problem.
+5. Networking architecture affects perceived performance.
+6. Browser metrics need context.
+7. Every optimization has tradeoffs.
+8. Verify every optimization — profile again.
+
+## Structure
 
 ```
 src/
-  components/   Controls.tsx  PerformancePanel.tsx  Table.tsx  TableRow.tsx
-  data/         generateData.ts
-  experiments/  process.ts        (baselineProcess, optimizedProcess)
-  hooks/        usePerformanceMeasure.ts
-  workers/      dataWorker.ts
-  api/          ledgerApi.ts      (mock ledger validation, 300–1000ms)
-  voucher/      VoucherDemo.tsx  UnoptimizedVoucherForm.tsx
-                OptimizedVoucherForm.tsx  components.tsx  useFastTypist.ts
-  App.tsx  main.tsx  index.css
+  app/            Home.tsx  navigation.ts  LegacyLab.tsx
+  components/     ExperimentHeader.tsx  ExperimentMetrics.tsx
+                  ModeSwitcher.tsx  ProfilingGuide.tsx  ErrorBoundary.tsx
+  performance/    measure.ts  renderCounter.ts  longTasks.ts
+                  fps.ts  observers.ts
+  labs/
+    rendering/    RenderingLab.tsx  dashboards.tsx  components.tsx  data.ts  README.md
+    main-thread/  MainThreadLab.tsx  pipeline.ts  worker.ts  README.md
+    observability/ ObservabilityLab.tsx  README.md
+    network/      NetworkLab.tsx  README.md
+    stress-test/  StressTestLab.tsx  CanvasStage.tsx  README.md
+    fps/          FpsLab.tsx  README.md
+  App.tsx  main.tsx
 ```
-
-## 9. Voucher entry demo (`/form`)
-
-A second experiment on the same theme, but for **input latency** instead of render
-cost: the same voucher form (date → ledger → debit/credit → amount → narration →
-save) implemented twice, toggled via **[ Unoptimized ] [ Optimized ]**.
-
-- **Unoptimized** (`voucher/UnoptimizedVoucherForm.tsx`): one API request per
-  keystroke, no debounce, no cancellation, no request ids (stale responses
-  overwrite fresh ones — watch the status flicker), no cache, no Enter-to-next,
-  no focus restore after save. Debug panel shows requests climbing, cancelled = 0,
-  cache hits = 0.
-- **Optimized** (`voucher/OptimizedVoucherForm.tsx`): local validation runs
-  synchronously; ledger validation is debounced ~250ms, in-flight requests are
-  aborted via `AbortController` + guarded by request id, successful results are
-  cached in a `Map`. Enter walks the form, save awaits pending validation,
-  re-checks authoritatively, resets and refocuses the date field; invalid save
-  focuses the first invalid field.
-- **Mock API** (`api/ledgerApi.ts`): `validateLedger(name, signal?)` with random
-  300–1000ms latency and real abort semantics.
-- **Simulate Fast Typist** (`voucher/useFastTypist.ts`): types "Sales Account"
-  at ~60–100ms/char through each form's real change path. Unoptimized fires ~13
-  requests with out-of-order landings; optimized fires ~1–2.
-- No Tailwind in this repo, so the demo reuses the lab's minimal CSS.
