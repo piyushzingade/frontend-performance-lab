@@ -1,0 +1,384 @@
+/* Engineering experiment — minimal, no decoration. */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+  background: #fff;
+}
+
+.lab {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px 40px;
+}
+
+header h1 {
+  font-size: 20px;
+  margin: 0 0 2px;
+}
+
+.sub {
+  margin: 0 0 4px;
+  color: #555;
+}
+
+.dataset-line {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.controls {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.mode-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.mode-row button,
+.filter-row button,
+.filter-row select,
+.filter-row input {
+  font: inherit;
+  padding: 6px 10px;
+  border: 1px solid #bbb;
+  background: #fff;
+}
+
+.mode-row button {
+  cursor: pointer;
+  min-width: 110px;
+}
+
+.mode-row button.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.filter-row input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.filter-row select,
+.filter-row button {
+  flex: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Locked widths: changing a value never resizes the control,
+   so siblings don't shift and wrap points stay stable. */
+.filter-row select[aria-label='Department'] {
+  width: 150px;
+}
+
+.filter-row select[aria-label='Status'] {
+  width: 130px;
+}
+
+.filter-row select[aria-label='Sort key'] {
+  width: 120px;
+}
+
+.filter-row select[aria-label='Sort direction'] {
+  width: 80px;
+}
+
+.filter-row button {
+  cursor: pointer;
+  background: #f0f0f0;
+  white-space: nowrap;
+}
+
+.filter-row button:first-of-type {
+  width: 172px; /* stable width when label flips to "Working…" */
+}
+
+.filter-row button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: #555;
+}
+
+.metrics {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+
+.metrics h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.metric {
+  border: 1px solid #e2e2e2;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric .k {
+  color: #666;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metric .v {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.selection-line {
+  margin: 0 0 8px;
+  color: #333;
+}
+
+.table-scroll {
+  border: 1px solid #ccc;
+  height: 520px;
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: #f4f4f4;
+  border-bottom: 1px solid #ccc;
+  text-align: left;
+  padding: 6px 8px;
+  z-index: 1;
+}
+
+tbody td {
+  border-bottom: 1px solid #eee;
+  padding: 6px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 33px;
+}
+
+tbody tr:hover {
+  background: #f6f9ff;
+}
+
+footer {
+  margin-top: 12px;
+  color: #777;
+}
+
+button.link {
+  font: inherit;
+  color: #1a56db;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---- Voucher demo ---- */
+.voucher-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border: 1px solid #ddd;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.voucher-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #333;
+  min-width: 0;
+}
+
+.voucher-grid .span-2 {
+  grid-column: span 2;
+}
+
+.voucher-grid input,
+.voucher-grid select {
+  font: inherit;
+  padding: 7px 9px;
+  border: 1px solid #bbb;
+  background: #fff;
+  min-width: 0;
+}
+
+.voucher-grid input:focus,
+.voucher-grid select:focus,
+.voucher-actions button:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 1px;
+}
+
+.ledger-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.ledger-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ledger-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.ledger-wrap input {
+  width: 100%;
+}
+
+.suggest {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #bbb;
+  max-height: 190px;
+  overflow: auto;
+}
+
+.suggest li {
+  padding: 6px 9px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggest li.active {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+.vstatus {
+  flex: none;
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  color: #555;
+  white-space: nowrap;
+}
+
+.vstatus-checking {
+  border-color: #d9a400;
+  color: #8a6600;
+}
+
+.vstatus-valid {
+  border-color: #2f9e44;
+  color: #2b8a3e;
+}
+
+.vstatus-invalid,
+.vstatus-error {
+  border-color: #e03131;
+  color: #c92a2a;
+}
+
+.field-error {
+  font-size: 12px;
+  color: #c92a2a;
+}
+
+.voucher-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.voucher-actions button {
+  font: inherit;
+  padding: 7px 14px;
+  border: 1px solid #bbb;
+  background: #f0f0f0;
+  cursor: pointer;
+}
+
+.voucher-actions button.primary {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.voucher-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.voucher-message {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.saved-list {
+  height: auto;
+  max-height: 260px;
+}
+
+@media (max-width: 700px) {
+  .voucher-grid {
+    grid-template-columns: 1fr;
+  }
+  .voucher-grid .span-2 {
+    grid-column: span 1;
+  }
+}
