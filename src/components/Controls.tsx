@@ -104,10 +104,6 @@ export function Controls(p: Props) {
           Sort by score
         </button>
       </div>
-      <p className="hint">
-        DevTools tests: <b>A</b> reload with Performance recording · <b>B</b> record + rapid scroll ·{' '}
-        <b>C</b> record + Apply search · <b>D</b> record + Sort button. Click any row to test selection.
-      </p>
     </div>
   );
 }

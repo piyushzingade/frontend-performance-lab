@@ -96,12 +96,6 @@ production notes.)
 | Row-click commits (raw → memo) | TBD | TBD |
 | Canvas draw ms @500K | — | TBD |
 
-## How to test
-
-DevTools tests: **A** reload with Performance recording · **B** record +
-rapid scroll · **C** record + Apply search · **D** record + Sort button.
-Click any row to test selection.
-
 ## How to Reproduce
 
 1. Open `/stress-test` (defaults: 100K virtualized — safe).
