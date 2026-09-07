@@ -246,6 +246,14 @@ footer {
   font-weight: 700;
 }
 
+.section-title {
+  font-size: 14px;
+  margin: 20px 0 0;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .lab-nav {
   display: flex;
   justify-content: space-between;

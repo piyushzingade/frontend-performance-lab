@@ -29,6 +29,25 @@ export function Home() {
           </article>
         ))}
       </div>
+      <h2 className="section-title">Earlier experiments</h2>
+      <div className="home-grid">
+        <article className="home-card">
+          <h2>100K-Row Table</h2>
+          <p>The original standalone lab: full-DOM baseline vs virtualization vs memoization vs worker.</p>
+          <p className="home-metric">Primary metric: DOM rows / operation ms</p>
+          <Link className="home-open" to="/100k">
+            Open experiment →
+          </Link>
+        </article>
+        <article className="home-card">
+          <h2>Voucher Entry</h2>
+          <p>Same accounting form twice: per-keystroke validation vs debounced, cancelled, cached validation.</p>
+          <p className="home-metric">Primary metric: API requests / validation lag</p>
+          <Link className="home-open" to="/form">
+            Open experiment →
+          </Link>
+        </article>
+      </div>
       <footer>
         <span>
           Recordings compare best on a production build: <code>npm run build &amp;&amp; npm run preview</code>.
