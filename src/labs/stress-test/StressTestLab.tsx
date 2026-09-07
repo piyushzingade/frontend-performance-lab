@@ -140,6 +140,10 @@ export function StressTestLab() {
           <button onClick={() => setFilter((f) => ({ ...f, sortKey: 'salary', sortDir: f.sortDir === 'desc' ? 'asc' : 'desc' }))}>Sort by salary</button>
         </div>
         <p className="hint">Dataset generation: {formatMs(genMs)}. Raw/memoized stages above {RAW_DOM_LIMIT.toLocaleString()} rows need explicit consent.</p>
+        <p className="hint">
+          DevTools tests: <b>A</b> reload with Performance recording · <b>B</b> record + rapid scroll ·{' '}
+          <b>C</b> record + Apply search · <b>D</b> record + Sort button. Click any row to test selection.
+        </p>
       </div>
 
       <ExperimentMetrics
