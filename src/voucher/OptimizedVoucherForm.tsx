@@ -5,12 +5,29 @@ import { SuggestionDropdown, useLedgerSuggest } from './LedgerSuggest';
 import { useFastTypist } from './useFastTypist';
 
 const DEBOUNCE_MS = 250;
+const CACHE_TTL_MS = 5 * 60 * 1000; // cached verdicts expire after 5 minutes
+const MAX_AMOUNT = 100_000_000;
+export const NARRATION_MAX = 200;
 
 type LocalErrors = {
   date?: string;
   ledger?: string;
   amount?: string;
+  narration?: string;
 };
+
+/**
+ * Sanitizes accountant-style input ("10,000.50") then enforces a strict
+ * money shape: digits, optional 2-decimal fraction, in (0, MAX_AMOUNT].
+ * Rejects commas-misplaced, scientific ("1e3"), hex ("0x10"), and junk.
+ */
+export function parseAmount(raw: string): number | null {
+  const clean = raw.replace(/[,_\s]/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
+  const n = Number(clean);
+  if (!Number.isFinite(n) || n <= 0 || n > MAX_AMOUNT) return null;
+  return n;
+}
 
 /**
  * OPTIMIZED voucher form — production-quality:
@@ -47,7 +64,11 @@ export function OptimizedVoucherForm() {
   const narrationRef = useRef<HTMLInputElement>(null);
   const saveRef = useRef<HTMLButtonElement>(null);
 
-  const cacheRef = useRef(new Map<string, boolean>());
+  const cacheRef = useRef(new Map<string, { valid: boolean; at: number }>());
+  const mountedRef = useRef(true);
+  useEffect(() => () => {
+    mountedRef.current = false; // mode switch mid-save: abandon the chain, touch no state
+  }, []);
   const reqIdRef = useRef(0);
   const nextNo = useRef(1);
   const abortRef = useRef<AbortController | null>(null);
@@ -69,14 +90,15 @@ export function OptimizedVoucherForm() {
       return;
     }
     const key = value.toLowerCase();
-    const cached = cacheRef.current.get(key);
-    if (cached !== undefined) {
-      setStatus(cached ? 'valid' : 'invalid');
+    const hit = cacheRef.current.get(key);
+    if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+      setStatus(hit.valid ? 'valid' : 'invalid');
       setCacheHits((n) => n + 1);
-      pendingRef.current = Promise.resolve(cached);
+      pendingRef.current = Promise.resolve(hit.valid);
       settledRef.current = true;
       return;
     }
+    if (hit) cacheRef.current.delete(key); // expired — revalidate from the backend
     setStatus('checking');
     settledRef.current = false;
     const timer = window.setTimeout(() => {
@@ -89,7 +111,7 @@ export function OptimizedVoucherForm() {
         (res) => {
           settledRef.current = true;
           if (id !== reqIdRef.current) return false; // stale — never overwrite
-          cacheRef.current.set(key, res.valid);
+          cacheRef.current.set(key, { valid: res.valid, at: Date.now() });
           setLastMs(performance.now() - t0);
           setStatus(res.valid ? 'valid' : 'invalid');
           return res.valid;
@@ -112,15 +134,15 @@ export function OptimizedVoucherForm() {
     if (!date || Number.isNaN(Date.parse(date))) e.date = 'Enter a valid date.';
     if (!ledger.trim()) e.ledger = 'Ledger is required.';
     if (!amount.trim()) e.amount = 'Amount is required.';
-    else if (Number.isNaN(Number(amount))) e.amount = 'Amount must be numeric.';
-    else if (Number(amount) <= 0) e.amount = 'Amount must be greater than zero.';
+    else if (parseAmount(amount) === null) e.amount = 'Enter an amount like 10,000.50 (max 2 decimals).';
+    if (narration.length > NARRATION_MAX) e.narration = `Narration must be under ${NARRATION_MAX} characters.`;
     return e;
   };
   const errors = localErrors();
   const show = (field: string) => touched[field] && errors[field as keyof LocalErrors];
 
-  const focusField = (field: 'date' | 'ledger' | 'amount') => {
-    ({ date: dateRef, ledger: ledgerRef, amount: amountRef })[field].current?.focus();
+  const focusField = (field: 'date' | 'ledger' | 'amount' | 'narration') => {
+    ({ date: dateRef, ledger: ledgerRef, amount: amountRef, narration: narrationRef })[field].current?.focus();
   };
 
   const enterNext =
@@ -146,7 +168,7 @@ export function OptimizedVoucherForm() {
   // backend check → reset + refocus. Invalid save focuses first invalid field. ----
   const handleSave = async () => {
     if (saving) return;
-    setTouched({ date: true, ledger: true, amount: true });
+    setTouched({ date: true, ledger: true, amount: true, narration: true });
     setMessage('');
     const errs = localErrors();
     if (errs.date) {
@@ -161,29 +183,36 @@ export function OptimizedVoucherForm() {
       focusField('amount');
       return;
     }
+    if (errs.narration) {
+      focusField('narration');
+      return;
+    }
     setSaving(true);
     try {
       // If a debounced validation is still pending, wait for the LATEST one.
       if (pendingRef.current && !settledRef.current) {
         setMessage('Waiting for ledger validation…');
         await pendingRef.current;
+        if (!mountedRef.current) return;
       }
       // Authoritative backend re-check at save time (bypasses cache).
       const t0 = performance.now();
       const res = await validateLedger(ledger.trim());
+      if (!mountedRef.current) return;
       setRequests((n) => n + 1);
       setLastMs(performance.now() - t0);
       if (!res.valid) {
-        cacheRef.current.set(ledger.trim().toLowerCase(), false);
+        cacheRef.current.set(ledger.trim().toLowerCase(), { valid: false, at: Date.now() });
         setStatus('invalid');
         setMessage(`"${ledger.trim()}" is not a known ledger.`);
         focusField('ledger');
         return;
       }
-      cacheRef.current.set(ledger.trim().toLowerCase(), true);
+      cacheRef.current.set(ledger.trim().toLowerCase(), { valid: true, at: Date.now() });
       setStatus('valid');
       setMessage('Saving…');
       await new Promise((r) => window.setTimeout(r, 350));
+      if (!mountedRef.current) return;
       const v: SavedVoucher = {
         no: nextNo.current++,
         date,
@@ -245,6 +274,8 @@ export function OptimizedVoucherForm() {
                 role="combobox"
                 aria-expanded={suggest.show}
                 aria-autocomplete="list"
+                aria-controls="ledger-suggest"
+                aria-activedescendant={suggest.show ? suggest.activeId : undefined}
               />
               {suggest.show && (
                 <SuggestionDropdown
@@ -290,9 +321,12 @@ export function OptimizedVoucherForm() {
             ref={narrationRef}
             value={narration}
             onChange={(e) => setNarration(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, narration: true }))}
             onKeyDown={enterNext(saveRef)}
             placeholder="Being…"
+            maxLength={NARRATION_MAX + 20}
           />
+          {show('narration') && <span className="field-error">{errors.narration}</span>}
         </label>
       </div>
       <div className="voucher-actions">

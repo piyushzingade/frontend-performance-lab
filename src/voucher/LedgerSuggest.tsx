@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isExactLedger, suggestLedgers } from './suggest';
 
+export const SUGGEST_LIST_ID = 'ledger-suggest';
+
 /**
  * Shared autocomplete state for the ledger field (used by BOTH forms —
  * suggestions are a UX feature, not one of the optimization variables).
@@ -18,6 +20,14 @@ export function useLedgerSuggest(value: string, apply: (v: string) => void) {
   const show = open && matches.length > 0 && !isExactLedger(value);
 
   useEffect(() => setHi(0), [matches]);
+
+  // Keep the keyboard-highlighted option visible AND announced: without this,
+  // arrowing past the fold moves a highlight nobody can see or hear.
+  const activeId = show ? `${SUGGEST_LIST_ID}-opt-${hi}` : undefined;
+  useEffect(() => {
+    if (!show) return;
+    document.getElementById(activeId ?? '')?.scrollIntoView({ block: 'nearest' });
+  }, [show, activeId]);
 
   const pick = (name: string) => {
     apply(name);
@@ -48,7 +58,7 @@ export function useLedgerSuggest(value: string, apply: (v: string) => void) {
     return false;
   };
 
-  return { show, matches, hi, setHi, setOpen, pick, handleKey };
+  return { show, matches, hi, activeId, setHi, setOpen, pick, handleKey };
 }
 
 export function SuggestionDropdown({
@@ -63,10 +73,11 @@ export function SuggestionDropdown({
   onHover: (i: number) => void;
 }) {
   return (
-    <ul className="suggest" role="listbox" aria-label="Ledger suggestions">
+    <ul className="suggest" id={SUGGEST_LIST_ID} role="listbox" aria-label="Ledger suggestions">
       {matches.map((m, i) => (
         <li
           key={m}
+          id={`${SUGGEST_LIST_ID}-opt-${i}`}
           role="option"
           aria-selected={i === hi}
           className={i === hi ? 'active' : ''}
