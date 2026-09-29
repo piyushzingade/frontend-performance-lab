@@ -33,6 +33,28 @@ npm install
 npm run dev        # http://localhost:5173 (mock API active — required for /network-lab)
 ```
 
+## First-time verification
+
+Use the development server for the interactive walkthroughs, especially the
+Network lab: its `/api/lab/*` endpoints are Vite development middleware.
+
+1. Open `http://localhost:5173/` and confirm all eight experiment cards open.
+2. Visit each route in the table below and follow that lab's **Quick check**
+   section. The in-app metrics should change after every named action.
+3. Run `npm run build` to verify the production bundle compiles.
+4. Run `npm run preview` for profiler recordings that you intend to compare.
+
+| Route | Quick success signal |
+| --- | --- |
+| `/rendering-lab` | Test buttons update interaction, render, and timing metrics. |
+| `/main-thread-lab` | Both main-thread and Worker runs produce ranked results. |
+| `/observability-lab` | Test actions add timestamped events to the live feed. |
+| `/network-lab` | A load draws measured waterfall bars; warm optimized run uses cache. |
+| `/stress-test` | Stage, DOM/canvas, and operation metrics update. |
+| `/fps-lab` | FPS meter runs and node count reflects the selected mode. |
+| `/100k` | Legacy table strategies remain selectable. |
+| `/form` | Both voucher modes accept input; optimized mode validates and saves. |
+
 ## Production profiling (important)
 
 Performance recordings intended for comparison should preferably be taken from

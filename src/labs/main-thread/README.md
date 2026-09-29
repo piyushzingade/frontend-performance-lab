@@ -87,6 +87,20 @@ datasets from the same seed.
 2. Read freezes + long tasks. Switch to Worker, run again.
 3. Try 100K in both modes.
 
+## Quick check
+
+1. Run `npm run dev` and open `http://localhost:5173/main-thread-lab`.
+2. Leave the default 50K dataset, choose **Baseline**, and click **Run
+   pipeline**. The result panel should show ranked matches and an operation
+   duration.
+3. Choose **Worker**. Wait until its metric says **Active**, then run again.
+   The same result panel should populate and include **Worker compute** time.
+4. Change the dataset size or mode while a run is in progress, then run again.
+   The controls must recover rather than staying on **Processing…**.
+
+Operation duration and freeze count depend on the device. Compare the two modes
+on the same dataset rather than expecting one universal number.
+
 ## Chrome DevTools Recording
 
 Performance tab: record a baseline run (one long task, dead frames), then a

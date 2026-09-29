@@ -86,6 +86,17 @@ constants.
 2. Press each control; watch cards + feed update.
 3. Generate the image (new LCP), run the CPU task (new long task).
 
+## Quick check
+
+1. Start with `npm run dev` and open `http://localhost:5173/observability-lab`.
+2. Press each test control once. Each action should add a timestamped entry to
+   the live event feed.
+3. **Render 5,000 rows** should reveal a rendered-row summary with a measured
+   duration; **Run CPU task** should report its measured work duration.
+4. Browser support varies: memory, event timing, layout-shift, and long-task
+   entries may be labeled unavailable or remain empty outside Chromium. That is
+   an honest capability result, not a failed lab.
+
 ## Chrome DevTools Recording
 
 Record the Performance tab while pressing controls; match trace rows (long

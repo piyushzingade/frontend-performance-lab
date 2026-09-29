@@ -101,31 +101,51 @@ export function OptimizedVoucherForm() {
     if (hit) cacheRef.current.delete(key); // expired — revalidate from the backend
     setStatus('checking');
     settledRef.current = false;
+    const id = ++reqIdRef.current;
+    let controller: AbortController | null = null;
+    let resolvePending: (valid: boolean) => void = () => {};
+    const pending = new Promise<boolean>((resolve) => {
+      resolvePending = resolve;
+    });
+    // Make the debounce itself awaitable. Saving immediately after typing now
+    // waits for this validation instead of racing it with a second request.
+    pendingRef.current = pending;
     const timer = window.setTimeout(() => {
-      const id = ++reqIdRef.current;
-      const controller = new AbortController();
+      controller = new AbortController();
       abortRef.current = controller;
       setRequests((n) => n + 1);
       const t0 = performance.now();
       const p = validateLedger(value, controller.signal).then(
         (res) => {
           settledRef.current = true;
-          if (id !== reqIdRef.current) return false; // stale — never overwrite
+          if (id !== reqIdRef.current) {
+            resolvePending(false);
+            return false; // stale — never overwrite
+          }
           cacheRef.current.set(key, { valid: res.valid, at: Date.now() });
           setLastMs(performance.now() - t0);
           setStatus(res.valid ? 'valid' : 'invalid');
+          resolvePending(res.valid);
           return res.valid;
         },
         (err) => {
           settledRef.current = true;
-          if (err?.name === 'AbortError' || id !== reqIdRef.current) return false;
+          if (err?.name === 'AbortError' || id !== reqIdRef.current) {
+            resolvePending(false);
+            return false;
+          }
           setStatus('error');
+          resolvePending(false);
           return false;
         },
       );
       pendingRef.current = p;
     }, DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      if (controller && !settledRef.current) controller.abort();
+      resolvePending(false);
+    };
   }, [ledger]);
 
   // ---- synchronous local validation (never touches the network) ----

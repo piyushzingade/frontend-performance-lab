@@ -103,6 +103,22 @@ production notes.)
 3. Raise to 250K/500K; read the consent gate on raw/memo stages.
 4. Fill the comparison table from your runs.
 
+## Quick check
+
+1. Run `npm run dev`, open `http://localhost:5173/stress-test`, and keep the
+   default **Virtualized** stage at 100K rows.
+2. Click **Apply search** or **Sort by salary**. The operation metric and the
+   comparison table should update; the DOM-row count should stay near the
+   viewport window rather than 100K.
+3. Switch to **Worker** and wait for **Active** before applying a search.
+4. Switch to **Canvas** and verify the panel reports one canvas element plus a
+   measured draw time.
+5. Raw and memoized stages above 100K intentionally require **Render anyway**.
+   Use that consent gate only when you are prepared for the tab to become slow.
+
+Use the same dataset size for comparisons. Large-data timings and memory values
+are device-dependent; blank heap values mean the browser does not expose that API.
+
 ## Chrome DevTools Recording
 
 Per stage: reload trace (commit + nodes), rapid-scroll trace (layout/paint),

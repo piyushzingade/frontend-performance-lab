@@ -96,6 +96,19 @@ the per-move `getBoundingClientRect` and hover scan are gone.
 2. Watch FPS/frame meters; switch to Optimized, repeat the drag.
 3. Raise to 5,000; pan the background in optimized mode (culling at work).
 
+## Quick check
+
+1. Start `npm run dev` and open `http://localhost:5173/fps-lab`.
+2. Pick **1,000 nodes** in **Baseline**, drag a visible node, and confirm the
+   FPS, average-frame, and dropped-frame metrics are updating.
+3. Switch to **Optimized**, drag a node, then drag empty background to pan.
+   The node metric should read fewer mounted nodes than the total when culling
+   is active.
+4. Repeat at 5,000 nodes only after confirming your browser remains responsive.
+
+The FPS panel is intentionally approximate. Use Chrome's Performance frame track
+for a recording you need to compare or report.
+
 ## Chrome DevTools Recording
 
 Performance tab: 5-second drag per mode. Baseline shows script+layout per frame

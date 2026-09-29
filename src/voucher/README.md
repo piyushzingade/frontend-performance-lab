@@ -131,6 +131,22 @@ current validation status, and last response time. Expected behavior:
    Voucher appears in Saved Vouchers with date, amount, narration — focus is
    already back on Voucher Date.
 
+## Quick check
+
+1. Run `npm run dev`, then open `http://localhost:5173/form`.
+2. In **Unoptimized Mode**, type a ledger name and confirm the debug counters
+   react to each keystroke.
+3. Switch to **Optimized Mode**. Type `Salse`, select **Sales Account** from
+   the suggestions with Arrow keys and Enter, then enter a positive amount.
+4. Save the voucher. A success message and one row in **Saved Vouchers** should
+   appear; the ledger and amount inputs should clear and focus should return to
+   the voucher date.
+5. Try saving immediately after changing the ledger. The form should wait for
+   the pending validation instead of saving an unchecked ledger.
+
+Ledger request timings are intentionally randomized between 300 and 1000 ms.
+Check the state transitions and counters, not a specific duration or request count.
+
 ## J. Tradeoffs I Accepted
 
 - Debounce adds ~250 ms before validation starts; correctness and load win.

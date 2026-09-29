@@ -95,6 +95,20 @@ or version keys.
 2. Switch to Optimized, load: 3 waves. Load again: all cache.
 3. "Reset + clear cache" restores cold state. Cross-check the Network panel.
 
+## Quick check
+
+1. Use `npm run dev` (not `npm run preview`) and open
+   `http://localhost:5173/network-lab`.
+2. In **Baseline**, click **Load page (sequential)**. Expect seven measured,
+   stacked request bars and a non-zero total load time.
+3. Switch to **Optimized**, click **Load page (optimized)**, then **Run again
+   (cache warm)**. The first run should show overlapping work and one prevented
+   duplicate; the second should show cache entries and no new wire requests.
+4. Use **Reset + clear cache** before repeating a cold-run comparison.
+
+The lab deliberately reports an error under `npm run preview` or static hosting:
+the mock API only exists in the Vite development server.
+
 ## Chrome DevTools Recording
 
 Network panel filtered to `/api/lab`: baseline shows 7 sequential entries;

@@ -111,8 +111,19 @@ export function MainThreadLab() {
   };
 
   const stats = longTaskStats(tasks);
+  const changeSize = (nextSize: number) => {
+    // Changing size replaces the worker. A result from the terminated worker
+    // can never arrive, so it must not leave the controls permanently busy.
+    setBusy(false);
+    setResult(null);
+    setOpMs(null);
+    setWorkerMs(null);
+    setFreezes([]);
+    setSize(nextSize);
+  };
   const switchMode = (m: Mode) => {
     setMode(m);
+    setBusy(false);
     setResult(null);
     setOpMs(null);
     setWorkerMs(null);
@@ -138,7 +149,7 @@ export function MainThreadLab() {
           onChange={switchMode}
         />
         <div className="filter-row">
-          <select aria-label="Dataset size" value={size} onChange={(e) => setSize(Number(e.target.value))}>
+          <select aria-label="Dataset size" value={size} onChange={(e) => changeSize(Number(e.target.value))}>
             {SIZES.map((n) => <option key={n} value={n}>{n.toLocaleString()} items</option>)}
           </select>
           <input aria-label="Search query" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="fuzzy query" />

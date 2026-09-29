@@ -113,6 +113,20 @@ explains why ("props referentially equal").
 3. Switch to Optimized, run the same test.
 4. Repeat with "Run Test: type 3 chars".
 
+## Quick check
+
+1. Start the app with `npm run dev`, then open `http://localhost:5173/rendering-lab`.
+2. In **Baseline**, click **Run Test: change region**. The selected region,
+   table content, and the interaction metrics should change.
+3. Click **Run Test: type 3 chars** and wait a moment for all three scheduled
+   keystrokes. The last interaction should name the typing test.
+4. Switch to **Optimized** and repeat both actions. The controls and metrics
+   should still work; the point of comparison is fewer tracked renders, not a
+   fixed timing number.
+
+If a metric starts at `—`, run one of the test buttons first. Measurements are
+captured from the current browser, so exact millisecond values vary by machine.
+
 ## Chrome DevTools Recording
 
 React DevTools Profiler (not Performance): profile one "Run Test: change region"
