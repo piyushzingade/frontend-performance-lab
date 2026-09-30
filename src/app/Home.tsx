@@ -13,12 +13,11 @@ export function Home() {
           They&apos;re solved by understanding what the browser is doing.
         </p>
         <p className="sub">
-          These experiments explore React rendering, main-thread work, networking, observability,
-          large-scale rendering, and frame performance through measurable before-and-after examples.
+          This page highlights three focused experiments with measurable before-and-after examples.
         </p>
       </header>
       <div className="home-grid">
-        {LAB_ORDER.map((lab) => (
+        {LAB_ORDER.filter((lab) => lab.id === 'rendering').map((lab) => (
           <article className="home-card" key={lab.id}>
             <h2>{lab.title}</h2>
             <p>{lab.problem}</p>
@@ -29,7 +28,7 @@ export function Home() {
           </article>
         ))}
       </div>
-      <h2 className="section-title">Earlier experiments</h2>
+      <h2 className="section-title">Additional labs</h2>
       <div className="home-grid">
         <article className="home-card">
           <h2>100K-Row Table</h2>
@@ -51,7 +50,7 @@ export function Home() {
       <footer>
         <span>
           Recordings compare best on a production build: <code>npm run build &amp;&amp; npm run preview</code>.
-          Bonus demos: <code>/100k</code> (100K-row table lab) and <code>/form</code> (voucher entry latency demo).
+          Available experiments: React Rendering, 100K-Row Table, and Voucher Entry.
         </span>
       </footer>
     </div>
