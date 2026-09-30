@@ -27,9 +27,6 @@ export function Home() {
             </Link>
           </article>
         ))}
-      </div>
-      <h2 className="section-title">Additional labs</h2>
-      <div className="home-grid">
         <article className="home-card">
           <h2>100K-Row Table</h2>
           <p>The original standalone lab: full-DOM baseline vs virtualization vs memoization vs worker.</p>
